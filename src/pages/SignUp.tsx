@@ -11,6 +11,7 @@ import {
 } from "../utilities/input";
 
 import CustomInput from "../components/common/CustomInput";
+import CustomFile from "../components/common/CustomFile";
 
 export default function SignUp() {
   const [isNicknameVerified, setIsNicknameVerified] = useState(false);
@@ -28,6 +29,19 @@ export default function SignUp() {
         .min(2, "별명을 입력해주세요")
         .regex(/^[가-힣a-zA-Z0-9]+$/, {
           message: "완전한 한글 혹은 영문만을 입력해주세요",
+        }),
+      profileImage: z
+        .instanceof(File, {
+          message: "프로필 사진을 선택해주세요",
+        })
+        .refine(
+          (file) => file.type === "image/png" || file.type === "image/jpeg",
+          {
+            message: "jpg, png 파일만 업로드 가능합니다.",
+          }
+        )
+        .refine((file) => file.size <= 1024 * 1024 * 5, {
+          message: "5MB 이하의 파일만 업로드 가능합니다.",
         }),
       email: z
         .string()
@@ -77,6 +91,7 @@ export default function SignUp() {
     getValues,
     setValue,
     setError,
+    clearErrors,
     formState: { errors },
   } = useForm<z.infer<typeof FORM_SCHEME>>({
     resolver: zodResolver(FORM_SCHEME),
@@ -153,6 +168,27 @@ export default function SignUp() {
             </button>
           )}
         </div>
+        <CustomFile
+          label="프로필 사진"
+          isRequired
+          hasPreview
+          accept="image/*"
+          name="profileImage"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            if (file) {
+              setValue("profileImage", file, { shouldValidate: true });
+              clearErrors("profileImage");
+            } else {
+              // 파일 선택 취소 시 폼 값 초기화하고 에러 다시 표시
+              setValue("profileImage", null as unknown as File);
+              setError("profileImage", {
+                message: "프로필 사진을 선택해주세요",
+              });
+            }
+          }}
+          errorMessage={errors.profileImage?.message}
+        />
         <CustomInput
           label="이메일"
           placeholder="이메일"

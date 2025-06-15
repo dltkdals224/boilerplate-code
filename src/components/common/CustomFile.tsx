@@ -71,7 +71,8 @@ const CustomFile = (
 
       <div
         className={cn(
-          "flex items-center gap-3 p-2 border border-gray-400 rounded-md cursor-pointer hover:border-gray-300 transition-colors",
+          "flex items-center gap-3 p-2 border rounded-md cursor-pointer hover:border-gray-300 transition-colors",
+          errorMessage ? "border-red-500" : "border-gray-400",
           className,
           hasPreview && "w-32"
         )}
@@ -80,7 +81,7 @@ const CustomFile = (
         <CustomSVG
           name="image"
           size="md"
-          color="#6b7280"
+          color={errorMessage ? "#ef4444" : "#6b7280"}
           className="flex-shrink-0"
         />
 

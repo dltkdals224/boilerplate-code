@@ -34,6 +34,7 @@ export const formatPhoneNumberHandler = (value: string) => {
   )}-${limitedNumbers.slice(7)}`;
 };
 
+// 파일 형식 변환 함수
 export const formatFileHandler = async (
   e: React.ChangeEvent<HTMLInputElement>,
   setValue: UseFormSetValue<any>,

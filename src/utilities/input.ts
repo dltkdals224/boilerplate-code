@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { UseFormSetValue } from "react-hook-form";
+import { UseFormClearErrors, UseFormSetValue } from "react-hook-form";
 
 // 한글 전용 입력 핸들러 생성 함수
 export const formatKoreanHandler =
@@ -32,4 +32,17 @@ export const formatPhoneNumberHandler = (value: string) => {
     3,
     7
   )}-${limitedNumbers.slice(7)}`;
+};
+
+// 파일 형식 변환 함수
+export const formatFileHandler = async (
+  e: React.ChangeEvent<HTMLInputElement>,
+  setValue: UseFormSetValue<any>,
+  clearErrors: UseFormClearErrors<any>
+) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  setValue("profileImage", file);
+  clearErrors("profileImage");
 };

@@ -11,11 +11,13 @@ import {
 } from "../utilities/input";
 
 import CustomInput from "../components/common/CustomInput";
+import CustomFile from "../components/common/CustomFile";
+import CustomCheckbox from "../components/common/CustomCheckbox";
 
 export default function SignUp() {
   const [isNicknameVerified, setIsNicknameVerified] = useState(false);
 
-  const FORM_SCHEME = z
+  const FORM_SCHEMA = z
     .object({
       name: z
         .string()
@@ -28,6 +30,19 @@ export default function SignUp() {
         .min(2, "별명을 입력해주세요")
         .regex(/^[가-힣a-zA-Z0-9]+$/, {
           message: "완전한 한글 혹은 영문만을 입력해주세요",
+        }),
+      profileImage: z
+        .instanceof(File, {
+          message: "프로필 사진을 선택해주세요",
+        })
+        .refine(
+          (file) => file.type === "image/png" || file.type === "image/jpeg",
+          {
+            message: "jpg, png 파일만 업로드 가능합니다.",
+          }
+        )
+        .refine((file) => file.size <= 1024 * 1024 * 5, {
+          message: "5MB 이하의 파일만 업로드 가능합니다.",
         }),
       email: z
         .string()
@@ -50,23 +65,26 @@ export default function SignUp() {
           }
         ),
       passwordConfirm: z.string().min(1, "비밀번호 확인을 입력해주세요"),
+      isAgree: z.boolean().refine((isAgree) => isAgree, {
+        message: "약관 동의를 해주세요",
+      }),
     })
     .superRefine((data, ctx) => {
-      // password와 passwordConfirm이 일치성 판단
-      if (data.password !== data.passwordConfirm) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "비밀번호가 일치하지 않습니다",
-          path: ["passwordConfirm"],
-        });
-      }
-
       // nickname 중복확인 체크
       if (!isNicknameVerified) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "중복 확인을 해주세요",
           path: ["nickname"],
+        });
+      }
+
+      // password와 passwordConfirm이 일치성 판단
+      if (data.password !== data.passwordConfirm) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "비밀번호가 일치하지 않습니다",
+          path: ["passwordConfirm"],
         });
       }
     });
@@ -77,9 +95,10 @@ export default function SignUp() {
     getValues,
     setValue,
     setError,
+    clearErrors,
     formState: { errors },
-  } = useForm<z.infer<typeof FORM_SCHEME>>({
-    resolver: zodResolver(FORM_SCHEME),
+  } = useForm<z.infer<typeof FORM_SCHEMA>>({
+    resolver: zodResolver(FORM_SCHEMA),
     mode: "onChange",
     criteriaMode: "firstError",
   });
@@ -101,12 +120,12 @@ export default function SignUp() {
     }
   };
 
-  const onSubmit = (data: z.infer<typeof FORM_SCHEME>) => {
+  const onSubmit = (data: z.infer<typeof FORM_SCHEMA>) => {
     console.log(data);
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full bg-gray-100 p-4">
+    <div className="flex flex-col items-center gap-4 w-full bg-gray-100 pt-10 pb-10">
       <form
         className="flex flex-col gap-1 w-100"
         onSubmit={handleSubmit(onSubmit)}
@@ -153,6 +172,27 @@ export default function SignUp() {
             </button>
           )}
         </div>
+        <CustomFile
+          label="프로필 사진"
+          isRequired
+          hasPreview
+          accept="image/*"
+          name="profileImage"
+          onChange={(e) => {
+            const file = e.target.files?.[0] || null;
+            if (file) {
+              setValue("profileImage", file, { shouldValidate: true });
+              clearErrors("profileImage");
+            } else {
+              // 파일 선택 취소 시 폼 값 초기화하고 에러 다시 표시
+              setValue("profileImage", null as unknown as File);
+              setError("profileImage", {
+                message: "프로필 사진을 선택해주세요",
+              });
+            }
+          }}
+          errorMessage={errors.profileImage?.message}
+        />
         <CustomInput
           label="이메일"
           placeholder="이메일"
@@ -190,6 +230,12 @@ export default function SignUp() {
           isRequired
           {...register("passwordConfirm")}
           errorMessage={errors.passwordConfirm?.message}
+        />
+        <CustomCheckbox
+          label="약관 동의"
+          isRequired
+          {...register("isAgree")}
+          errorMessage={errors.isAgree?.message}
         />
         <button
           className="bg-blue-500 text-white rounded-md px-4 py-2 cursor-pointer"
